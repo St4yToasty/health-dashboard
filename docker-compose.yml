@@ -9,8 +9,10 @@ services:
       POSTGRES_DB: health
       TZ: Europe/Lisbon
       PGTZ: Europe/Lisbon
+    # Host port 5433 to avoid conflicting with other local Postgres on 5432.
+    # Connect from the host with: postgres://health:health@localhost:5433/health
     ports:
-      - '5432:5432'
+      - '5433:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

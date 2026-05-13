@@ -43,10 +43,14 @@ When working in this repo, read these files first (in this order):
 These are not yet locked. When you reach work that requires one, ask the user before picking:
 
 - **Chart library** — to be compared when the viz layer is built. Tokens are library-agnostic CSS vars; whichever lib we pick must consume `var(--data-N)`.
-- **ORM / query builder** — Drizzle vs Kysely vs node-postgres + SQL. Decide when the DB layer starts.
-- **Migration tool** — likely tied to the ORM choice. Standalone alternatives: dbmate, sqlx.
 - **Component kit** — shadcn-svelte is the leading candidate but not locked.
 - **Cloudflare hostname** — needs to be picked when we set up the tunnel route. Will probably be `<something>.<your-domain>`.
+
+## Locked-in choices
+
+- **ORM:** Drizzle (`drizzle-orm` + `drizzle-kit`) — schema in `src/lib/server/db/schema/`, migrations in `migrations/`. Driver: postgres.js (`postgres` package, not `pg`).
+- **Migrations:** drizzle-kit auto-generates SQL from schema diffs (`pnpm db:generate`). Hand-crafted custom migrations (for things Drizzle can't express in its DSL, like GiST exclusion constraints) live alongside the generated ones — see `migrations/0001_gist_and_views.sql`. Run with `pnpm db:migrate`. Reset + reseed locally with `pnpm db:reset && pnpm db:seed`.
+- **Local Postgres port:** 5433 (not 5432) to avoid colliding with another Postgres container on this machine. See `docker-compose.yml`.
 
 ## Environment
 
