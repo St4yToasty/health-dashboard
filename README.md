@@ -49,6 +49,7 @@ health-dashboard/                  ← this repo (app code)
     ├── DEPLOY.md                  ← k8s deployment runbook
     ├── DEVELOPMENT.md             ← local dev loop
     ├── REMINDERS.md               ← Telegram bot reminder spec
+    ├── IMPLEMENTATION_PLAN.md     ← 12 sequenced phases from empty repo to live app
     └── ROADMAP.md                 ← v1 vs v2 split
 
 ~/devel/kubernetes-deployments/
