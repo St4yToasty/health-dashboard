@@ -1,0 +1,300 @@
+/* Tailwind v4 — utilities + preflight reset */
+@import 'tailwindcss';
+
+/* Inter Variable, self-hosted */
+@import '@fontsource-variable/inter';
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Design tokens — Cinema Slate
+ *
+ * Single source of truth: design-system/MASTER.md.
+ * Components must consume these via var(--…). Never hardcode hex.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+:root {
+	/* ── Color: surfaces (dark, default) ── */
+	--bg-canvas: #0a0a0b;
+	--bg-surface: #141416;
+	--bg-surface-elevated: #1c1c1f;
+	--bg-surface-sunken: #07070a;
+
+	/* ── Color: foreground (dark) ── */
+	--fg-default: #ededef;
+	--fg-muted: #a1a1aa;
+	--fg-subtle: #71717a;
+	--fg-disabled: #52525b;
+
+	/* ── Color: borders (dark) ── */
+	--border-default: rgba(255, 255, 255, 0.08);
+	--border-strong: rgba(255, 255, 255, 0.14);
+	--border-focus: #818cf8;
+
+	/* ── Color: brand accent (indigo, dark) ── */
+	--accent: #6366f1;
+	--accent-hover: #818cf8;
+	--accent-active: #4f46e5;
+	--accent-subtle: rgba(99, 102, 241, 0.14);
+	--accent-fg: #ffffff;
+
+	/* ── Color: semantic (dark) — pair with icon/sign, never color-only ── */
+	--positive: #22c55e;
+	--positive-subtle: rgba(34, 197, 94, 0.14);
+	--warning: #f59e0b;
+	--warning-subtle: rgba(245, 158, 11, 0.14);
+	--danger: #ef4444;
+	--danger-subtle: rgba(239, 68, 68, 0.14);
+	--info: #38bdf8;
+	--info-subtle: rgba(56, 189, 248, 0.14);
+
+	/* ── Color: scrim (modal/sheet backdrop, dark) ── */
+	--scrim: rgba(0, 0, 0, 0.55);
+
+	/* ── Color: data viz (dark) — chart-library agnostic ── */
+	--data-1: #6366f1; /* weight */
+	--data-2: #22c55e; /* protein, water, steps */
+	--data-3: #f59e0b; /* calories ceiling */
+	--data-4: #38bdf8; /* sleep */
+	--data-5: #ec4899; /* workouts */
+	--data-6: #a855f7;
+	--data-7: #14b8a6;
+	--data-1-subtle: rgba(99, 102, 241, 0.18);
+	--data-2-subtle: rgba(34, 197, 94, 0.18);
+	--data-3-subtle: rgba(245, 158, 11, 0.18);
+	--data-4-subtle: rgba(56, 189, 248, 0.18);
+	--data-5-subtle: rgba(236, 72, 153, 0.18);
+	--data-6-subtle: rgba(168, 85, 247, 0.18);
+	--data-7-subtle: rgba(20, 184, 166, 0.18);
+
+	/* ── Typography scale ── */
+	--text-xs: 12px;
+	--leading-xs: 16px;
+	--text-sm: 13px;
+	--leading-sm: 18px;
+	--text-base: 15px;
+	--leading-base: 22px;
+	--text-md: 17px;
+	--leading-md: 24px;
+	--text-lg: 20px;
+	--leading-lg: 28px;
+	--text-xl: 24px;
+	--leading-xl: 32px;
+	--text-2xl: 32px;
+	--leading-2xl: 36px;
+	--text-3xl: 44px;
+	--leading-3xl: 48px;
+
+	--fw-regular: 400;
+	--fw-medium: 500;
+	--fw-semibold: 600;
+	--fw-bold: 700;
+
+	--tracking-tight: -0.01em;
+	--tracking-normal: 0;
+	--tracking-label: 0.04em;
+
+	--font-sans:
+		'Inter Variable', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui,
+		sans-serif;
+
+	/* ── Spacing scale (4pt grid) ── */
+	--space-0: 0;
+	--space-1: 4px;
+	--space-2: 8px;
+	--space-3: 12px;
+	--space-4: 16px;
+	--space-5: 20px;
+	--space-6: 24px;
+	--space-8: 32px;
+	--space-10: 40px;
+	--space-12: 48px;
+	--space-16: 64px;
+	--space-20: 80px;
+
+	/* ── Radius ── */
+	--radius-xs: 4px;
+	--radius-sm: 8px;
+	--radius-md: 12px;
+	--radius-lg: 16px;
+	--radius-xl: 20px;
+	--radius-full: 9999px;
+
+	/* ── Elevation (dark: border + inner top highlight) ── */
+	--elev-0: none;
+	--elev-1: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+	--elev-2:
+		0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+	--elev-3:
+		0 20px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+	/* ── Motion ── */
+	--dur-instant: 0ms;
+	--dur-fast: 120ms;
+	--dur-base: 200ms;
+	--dur-slow: 320ms;
+	--dur-celebr: 480ms;
+	--ease-standard: cubic-bezier(0.2, 0, 0, 1);
+	--ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+	--ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* ── Light theme override ── */
+[data-theme='light'] {
+	--bg-canvas: #fafaf9;
+	--bg-surface: #ffffff;
+	--bg-surface-elevated: #ffffff;
+	--bg-surface-sunken: #f4f4f5;
+
+	--fg-default: #0a0a0a;
+	--fg-muted: #52525b;
+	--fg-subtle: #71717a;
+	--fg-disabled: #a1a1aa;
+
+	--border-default: #e4e4e7;
+	--border-strong: #d4d4d8;
+	--border-focus: #4f46e5;
+
+	--accent: #4f46e5;
+	--accent-hover: #4338ca;
+	--accent-active: #3730a3;
+	--accent-subtle: rgba(79, 70, 229, 0.1);
+	--accent-fg: #ffffff;
+
+	--positive: #16a34a;
+	--positive-subtle: rgba(22, 163, 74, 0.12);
+	--warning: #d97706;
+	--warning-subtle: rgba(217, 119, 6, 0.12);
+	--danger: #dc2626;
+	--danger-subtle: rgba(220, 38, 38, 0.1);
+	--info: #0284c7;
+	--info-subtle: rgba(2, 132, 199, 0.1);
+
+	--scrim: rgba(15, 23, 42, 0.45);
+
+	--data-1: #4f46e5;
+	--data-2: #16a34a;
+	--data-3: #d97706;
+	--data-4: #0284c7;
+	--data-5: #db2777;
+	--data-6: #9333ea;
+	--data-7: #0d9488;
+
+	--elev-1: 0 1px 2px rgba(15, 23, 42, 0.04);
+	--elev-2: 0 4px 12px rgba(15, 23, 42, 0.08);
+	--elev-3: 0 20px 48px rgba(15, 23, 42, 0.12);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Tailwind v4 @theme — exposes the tokens as Tailwind utilities.
+ * Generates utilities like bg-canvas, text-default, rounded-lg, etc.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+@theme {
+	--color-canvas: var(--bg-canvas);
+	--color-surface: var(--bg-surface);
+	--color-surface-elevated: var(--bg-surface-elevated);
+	--color-surface-sunken: var(--bg-surface-sunken);
+
+	--color-default: var(--fg-default);
+	--color-muted: var(--fg-muted);
+	--color-subtle: var(--fg-subtle);
+	--color-disabled: var(--fg-disabled);
+
+	--color-border: var(--border-default);
+	--color-border-strong: var(--border-strong);
+
+	--color-accent: var(--accent);
+	--color-accent-hover: var(--accent-hover);
+	--color-accent-active: var(--accent-active);
+	--color-accent-subtle: var(--accent-subtle);
+	--color-accent-fg: var(--accent-fg);
+
+	--color-positive: var(--positive);
+	--color-positive-subtle: var(--positive-subtle);
+	--color-warning: var(--warning);
+	--color-warning-subtle: var(--warning-subtle);
+	--color-danger: var(--danger);
+	--color-danger-subtle: var(--danger-subtle);
+	--color-info: var(--info);
+	--color-info-subtle: var(--info-subtle);
+
+	--color-data-1: var(--data-1);
+	--color-data-2: var(--data-2);
+	--color-data-3: var(--data-3);
+	--color-data-4: var(--data-4);
+	--color-data-5: var(--data-5);
+	--color-data-6: var(--data-6);
+	--color-data-7: var(--data-7);
+
+	--font-sans: var(--font-sans);
+
+	--radius-xs: var(--radius-xs);
+	--radius-sm: var(--radius-sm);
+	--radius-md: var(--radius-md);
+	--radius-lg: var(--radius-lg);
+	--radius-xl: var(--radius-xl);
+	--radius-full: var(--radius-full);
+
+	--text-xs: var(--text-xs);
+	--text-sm: var(--text-sm);
+	--text-base: var(--text-base);
+	--text-md: var(--text-md);
+	--text-lg: var(--text-lg);
+	--text-xl: var(--text-xl);
+	--text-2xl: var(--text-2xl);
+	--text-3xl: var(--text-3xl);
+
+	--ease-standard: var(--ease-standard);
+	--ease-emphasized: var(--ease-emphasized);
+	--ease-exit: var(--ease-exit);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Base layer — global defaults, applied site-wide.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+html {
+	color-scheme: dark light;
+	font-family: var(--font-sans);
+	font-feature-settings: 'cv11' 1;
+}
+
+body {
+	background-color: var(--bg-canvas);
+	color: var(--fg-default);
+	font-size: var(--text-base);
+	line-height: var(--leading-base);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	text-rendering: optimizeLegibility;
+}
+
+/* Tabular numerics utility — apply to any number rendering for KPIs, charts, etc. */
+.num {
+	font-variant-numeric: tabular-nums;
+}
+
+/* Visible focus ring on all interactive elements unless they manage their own */
+:focus-visible {
+	outline: 2px solid var(--border-focus);
+	outline-offset: 2px;
+}
+
+/* Respect reduced motion globally — see MASTER.md §6 */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+/* iOS Safari: keep inputs at 16px+ so they don't auto-zoom on focus.
+ * Components should default to --text-md (17px), but this is the safety net. */
+input,
+select,
+textarea {
+	font-size: max(16px, var(--text-md));
+}
