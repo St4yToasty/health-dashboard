@@ -1,0 +1,17 @@
+{
+	"data": {
+		"sleep_analysis": [
+			{
+				"startDate": "2026-05-11 23:45:00 +0100",
+				"endDate": "2026-05-12 06:50:00 +0100",
+				"inBed": 425,
+				"asleep": 398,
+				"deep": 62,
+				"rem": 86,
+				"core": 218,
+				"awake": 32,
+				"source": "Sleep Cycle"
+			}
+		]
+	}
+}

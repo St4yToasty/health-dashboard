@@ -10,7 +10,9 @@
  */
 
 import { env } from '$env/dynamic/private';
-import { drizzle } from 'drizzle-orm/postgres-js';
+import type { ExtractTablesWithRelations } from 'drizzle-orm';
+import type { PgTransaction } from 'drizzle-orm/pg-core';
+import { drizzle, type PostgresJsQueryResultHKT } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
 
@@ -28,7 +30,22 @@ const client = postgres(env.DATABASE_URL, {
 
 export const db = drizzle(client, { schema, casing: 'snake_case' });
 
+/** The top-level Drizzle client. Has `.transaction()`, `.execute()`, query builders, etc. */
 export type Database = typeof db;
+
+/** A live transaction passed to `db.transaction(async (tx) => …)`. */
+export type Transaction = PgTransaction<
+	PostgresJsQueryResultHKT,
+	typeof schema,
+	ExtractTablesWithRelations<typeof schema>
+>;
+
+/**
+ * Anything that can run queries — either the top-level db or a transaction.
+ * Use this as the parameter type in helpers/mappers that should be callable
+ * both inside and outside a transaction.
+ */
+export type DbOrTx = Database | Transaction;
 
 // Re-export the schema so consumers can `import { db, foods } from '$lib/server/db'`
 export * from './schema';

@@ -28,7 +28,9 @@ export default defineConfig({
 					name: 'server',
 					environment: 'node',
 					include: ['src/**/*.{test,spec}.{js,ts}'],
-					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
+					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}'],
+					// Force tests to use a separate DB so they never touch dev fixture data.
+					env: { DATABASE_URL: 'postgres://health:health@localhost:5433/health_test' }
 				}
 			}
 		]

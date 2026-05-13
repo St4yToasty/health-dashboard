@@ -1,0 +1,22 @@
+{
+	"data": {
+		"workouts": [
+			{
+				"name": "Running",
+				"start": "2026-05-12 07:15:00 +0100",
+				"end": "2026-05-12 07:48:00 +0100",
+				"totalActiveEnergyBurned": { "qty": 340, "units": "kcal" },
+				"totalDistance": { "qty": 5200, "units": "m" },
+				"avgHeartRate": { "qty": 152, "units": "bpm" },
+				"maxHeartRate": { "qty": 174, "units": "bpm" }
+			},
+			{
+				"name": "Strength Training",
+				"start": "2026-05-12 18:00:00 +0100",
+				"end": "2026-05-12 18:45:00 +0100",
+				"totalActiveEnergyBurned": { "qty": 220, "units": "kcal" },
+				"avgHeartRate": { "qty": 118, "units": "bpm" }
+			}
+		]
+	}
+}
