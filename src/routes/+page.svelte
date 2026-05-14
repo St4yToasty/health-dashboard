@@ -9,6 +9,9 @@
 	import PlusSquare from 'lucide-svelte/icons/plus-square';
 	import Utensils from 'lucide-svelte/icons/utensils';
 	import Droplets from 'lucide-svelte/icons/droplets';
+	import Scale from 'lucide-svelte/icons/scale';
+	import Ruler from 'lucide-svelte/icons/ruler';
+	import ChevronLeft from 'lucide-svelte/icons/chevron-left';
 
 	import MetricCard from '$lib/components/MetricCard.svelte';
 	import ProgressBar from '$lib/components/ProgressBar.svelte';
@@ -19,6 +22,9 @@
 	import TabBar from '$lib/components/TabBar.svelte';
 	import Sheet from '$lib/components/Sheet.svelte';
 	import Toaster from '$lib/components/Toaster.svelte';
+	import WaterForm from '$lib/components/forms/WaterForm.svelte';
+	import WeightForm from '$lib/components/forms/WeightForm.svelte';
+	import BodyMeasurementForm from '$lib/components/forms/BodyMeasurementForm.svelte';
 	import type { IconComponent } from '$lib/icons';
 
 	import type { PageData } from './$types';
@@ -39,8 +45,19 @@
 		}
 	];
 
-	// Quick-log sheet state.
+	// Quick-log sheet state. logMode === null shows the chooser; otherwise the matching form.
+	type LogMode = 'water' | 'weight' | 'measurement' | 'meal';
 	let sheetOpen = $state(false);
+	let logMode = $state<LogMode | null>(null);
+
+	// Reset the mode when the sheet closes so reopening lands on the chooser.
+	$effect(() => {
+		if (!sheetOpen) logMode = null;
+	});
+
+	function closeSheet() {
+		sheetOpen = false;
+	}
 
 	// Greeting based on local hour.
 	const hour = new Date().getHours();
@@ -301,66 +318,77 @@
 	</div>
 </main>
 
-<!-- Quick-log Sheet (FAB → here). Phase 5 swaps the buttons for the real flows. -->
-<Sheet bind:open={sheetOpen} title="Quick log" description="What do you want to log?">
-	<div class="grid grid-cols-2 gap-3 py-2">
-		<form
-			method="POST"
-			action="?/addWater"
-			use:enhance={() => {
-				return async ({ result }) => {
-					sheetOpen = false;
-					if (result.type === 'success') {
-						toast.success('+250 ml water');
-						await invalidateAll();
-					} else {
-						toast.error('Could not log water');
-					}
-				};
-			}}
-		>
-			<input type="hidden" name="amount_ml" value="250" />
-			<Button variant="secondary" class="w-full" type="submit">+250 ml water</Button>
-		</form>
-		<form
-			method="POST"
-			action="?/addWater"
-			use:enhance={() => {
-				return async ({ result }) => {
-					sheetOpen = false;
-					if (result.type === 'success') {
-						toast.success('+500 ml water');
-						await invalidateAll();
-					} else {
-						toast.error('Could not log water');
-					}
-				};
-			}}
-		>
-			<input type="hidden" name="amount_ml" value="500" />
-			<Button variant="secondary" class="w-full" type="submit">+500 ml water</Button>
-		</form>
-		<Button
-			variant="secondary"
-			class="w-full"
-			onclick={() => {
-				toast.message('Weight form lands in Phase 5');
-				sheetOpen = false;
-			}}
-		>
-			Weight
-		</Button>
-		<Button
-			variant="secondary"
-			class="w-full"
-			onclick={() => {
-				toast.message('Meal form lands in Phase 5');
-				sheetOpen = false;
-			}}
-		>
-			Meal
-		</Button>
-	</div>
+<!--
+  Quick-log Sheet — multi-mode shell.
+  No mode: 4 buttons. With a mode: that form fills the body, with a back chevron.
+  Closing the sheet resets the mode so reopening starts fresh at the chooser.
+-->
+<Sheet
+	bind:open={sheetOpen}
+	title={logMode === null
+		? 'Quick log'
+		: logMode === 'water'
+			? 'Log water'
+			: logMode === 'weight'
+				? 'Log weight'
+				: logMode === 'measurement'
+					? 'Body measurements'
+					: 'Log meal'}
+	description={logMode === null ? 'What do you want to log?' : undefined}
+>
+	{#snippet headerAction()}
+		{#if logMode !== null}
+			<Button
+				type="button"
+				variant="ghost"
+				size="compact"
+				onclick={() => (logMode = null)}
+				aria-label="Back to choices"
+			>
+				<ChevronLeft class="size-4" aria-hidden="true" />
+				Back
+			</Button>
+		{/if}
+	{/snippet}
+
+	{#if logMode === null}
+		<div class="grid grid-cols-2 gap-3 py-2">
+			<Button variant="secondary" class="h-20 w-full flex-col" onclick={() => (logMode = 'water')}>
+				<Droplets class="size-5" aria-hidden="true" />
+				<span>Water</span>
+			</Button>
+			<Button
+				variant="secondary"
+				class="h-20 w-full flex-col"
+				onclick={() => (logMode = 'weight')}
+			>
+				<Scale class="size-5" aria-hidden="true" />
+				<span>Weight</span>
+			</Button>
+			<Button variant="secondary" class="h-20 w-full flex-col" onclick={() => (logMode = 'meal')}>
+				<Utensils class="size-5" aria-hidden="true" />
+				<span>Meal</span>
+			</Button>
+			<Button
+				variant="secondary"
+				class="h-20 w-full flex-col"
+				onclick={() => (logMode = 'measurement')}
+			>
+				<Ruler class="size-5" aria-hidden="true" />
+				<span>Measurements</span>
+			</Button>
+		</div>
+	{:else if logMode === 'water'}
+		<WaterForm onSubmitted={closeSheet} />
+	{:else if logMode === 'weight'}
+		<WeightForm onSubmitted={closeSheet} />
+	{:else if logMode === 'measurement'}
+		<BodyMeasurementForm onSubmitted={closeSheet} />
+	{:else if logMode === 'meal'}
+		<div class="rounded-md border border-(color:--border-default) bg-surface-sunken p-4 text-sm text-muted">
+			Meal flow lands in the next commit of Phase 5 — needs the food library route to come with it.
+		</div>
+	{/if}
 </Sheet>
 
 <FAB label="Quick log" onclick={() => (sheetOpen = true)} />
