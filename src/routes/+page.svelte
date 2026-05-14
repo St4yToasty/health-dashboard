@@ -1,88 +1,374 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
+	import { toast } from 'svelte-sonner';
+	import Bell from 'lucide-svelte/icons/bell';
+	import Settings from 'lucide-svelte/icons/settings';
+	import Home from 'lucide-svelte/icons/home';
+	import LineChart from 'lucide-svelte/icons/line-chart';
+	import PlusSquare from 'lucide-svelte/icons/plus-square';
+	import Utensils from 'lucide-svelte/icons/utensils';
+	import Droplets from 'lucide-svelte/icons/droplets';
 
-	type Theme = 'auto' | 'light' | 'dark';
+	import MetricCard from '$lib/components/MetricCard.svelte';
+	import ProgressBar from '$lib/components/ProgressBar.svelte';
+	import Sparkline from '$lib/components/Sparkline.svelte';
+	import Button from '$lib/components/Button.svelte';
+	import Card from '$lib/components/Card.svelte';
+	import FAB from '$lib/components/FAB.svelte';
+	import TabBar from '$lib/components/TabBar.svelte';
+	import Sheet from '$lib/components/Sheet.svelte';
+	import Toaster from '$lib/components/Toaster.svelte';
+	import type { IconComponent } from '$lib/icons';
 
-	let theme = $state<Theme>('auto');
+	import type { PageData } from './$types';
 
-	onMount(() => {
-		const stored = (localStorage.getItem('theme') as Theme | null) ?? 'auto';
-		theme = stored;
+	let { data }: { data: PageData } = $props();
+
+	// Tab bar state — only Home is real for now; Phase 5/6 add the rest.
+	type Tab = 'home' | 'log' | 'trends' | 'settings';
+	let activeTab = $state<Tab>('home');
+	const tabs = [
+		{ value: 'home' as const, label: 'Home', icon: Home as unknown as IconComponent },
+		{ value: 'log' as const, label: 'Log', icon: PlusSquare as unknown as IconComponent },
+		{ value: 'trends' as const, label: 'Trends', icon: LineChart as unknown as IconComponent },
+		{
+			value: 'settings' as const,
+			label: 'Settings',
+			icon: Settings as unknown as IconComponent
+		}
+	];
+
+	// Quick-log sheet state.
+	let sheetOpen = $state(false);
+
+	// Greeting based on local hour.
+	const hour = new Date().getHours();
+	const greeting =
+		hour < 6
+			? 'Up early'
+			: hour < 12
+				? 'Good morning'
+				: hour < 18
+					? 'Good afternoon'
+					: 'Good evening';
+
+	// Formatters.
+	const fmt = (n: number) => new Intl.NumberFormat('en').format(Math.round(n));
+	const dateRelative = (iso: Date | string) => {
+		const d = typeof iso === 'string' ? new Date(iso) : iso;
+		const days = Math.round((Date.now() - d.getTime()) / 86400000);
+		if (days <= 0) return 'today';
+		if (days === 1) return 'yesterday';
+		if (days < 7) return `${days}d ago`;
+		return d.toLocaleDateString('en', { month: 'short', day: 'numeric' });
+	};
+
+	// Derived display values.
+	const weightDelta = $derived.by(() => {
+		if (data.weightSparkline.length < 2) return null;
+		const first = data.weightSparkline[0].value;
+		const last = data.weightSparkline[data.weightSparkline.length - 1].value;
+		const diff = last - first;
+		return {
+			value: Number(diff.toFixed(1)),
+			positive: diff < 0, // loss is "positive" for weight-loss goal
+			suffix: 'kg'
+		};
 	});
 
-	function applyTheme(next: Theme) {
-		theme = next;
-		try {
-			localStorage.setItem('theme', next);
-		} catch (_) {
-			/* ignore */
-		}
-		const resolved =
-			next === 'auto'
-				? window.matchMedia('(prefers-color-scheme: light)').matches
-					? 'light'
-					: 'dark'
-				: next;
-		if (resolved === 'light') {
-			document.documentElement.setAttribute('data-theme', 'light');
-		} else {
-			document.documentElement.removeAttribute('data-theme');
-		}
-	}
+	const sleepDuration = $derived.by(() => {
+		if (!data.sleep || !data.sleep.asleepMin) return null;
+		const h = Math.floor(data.sleep.asleepMin / 60);
+		const m = data.sleep.asleepMin % 60;
+		return `${h}h ${String(m).padStart(2, '0')}m`;
+	});
+
+	// Goal fallbacks (used when no goal row exists yet).
+	const calGoal = $derived(data.goals.daily_calories ?? 1800);
+	const waterGoal = $derived(data.goals.daily_water_ml ?? 2500);
+	const stepsGoal = $derived(data.goals.daily_steps ?? 8000);
 </script>
 
 <svelte:head>
-	<title>Health Dashboard</title>
+	<title>Today · health-dashboard</title>
 </svelte:head>
 
-<main class="min-h-dvh px-4 py-8 md:px-8 md:py-12">
-	<div class="mx-auto max-w-2xl space-y-8">
-		<header class="space-y-2">
-			<p class="text-xs tracking-[0.04em] text-muted uppercase">Health dashboard</p>
-			<h1 class="text-2xl font-semibold text-default">Phase 0 — foundations</h1>
-			<p class="text-base text-muted">
-				SvelteKit scaffolded, Tailwind v4 + design tokens wired, both themes working. The real
-				bento home lands in Phase 4.
-			</p>
-		</header>
+<Toaster />
 
-		<section
-			class="rounded-lg border border-(color:--border-default) bg-surface p-5 shadow-[var(--elev-1)]"
-		>
-			<h2 class="text-md mb-3 font-semibold text-default">Theme</h2>
-			<div class="flex gap-2">
-				{#each ['auto', 'light', 'dark'] as const as option (option)}
-					<button
-						type="button"
-						onclick={() => applyTheme(option)}
-						class="rounded-md border border-(color:--border-default) px-3 py-1.5 text-sm transition-colors"
-						class:bg-accent={theme === option}
-						class:text-accent-fg={theme === option}
-						class:text-default={theme !== option}
-					>
-						{option}
-					</button>
-				{/each}
-			</div>
-			<p class="text-sm text-subtle mt-3">Active: <span class="text-default">{theme}</span></p>
-		</section>
+<!-- Sticky header -->
+<header
+	class="sticky top-0 z-20 border-b border-(color:--border-default) bg-[color-mix(in_srgb,var(--bg-canvas)_88%,transparent)] backdrop-blur-xl"
+	style:padding-top="env(safe-area-inset-top)"
+>
+	<div class="mx-auto flex h-14 max-w-4xl items-center justify-between px-4 md:px-8">
+		<div>
+			<p class="text-xs tracking-[0.04em] uppercase text-subtle">{data.today}</p>
+			<p class="text-base font-semibold text-default">{greeting}</p>
+		</div>
+		<div class="flex items-center gap-1">
+			<Button variant="ghost" size="icon" aria-label="Notifications">
+				<Bell class="size-5" aria-hidden="true" />
+			</Button>
+			<Button variant="ghost" size="icon" aria-label="Settings">
+				<Settings class="size-5" aria-hidden="true" />
+			</Button>
+		</div>
+	</div>
+</header>
 
-		<section
-			class="rounded-lg border border-(color:--border-default) bg-surface p-5 shadow-[var(--elev-1)]"
+<main
+	class="mx-auto max-w-4xl px-4 pt-4 md:px-8 md:pt-6"
+	style:padding-bottom="calc(56px + 56px + env(safe-area-inset-bottom) + 32px)"
+>
+	<!-- Bento grid -->
+	<div class="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+		<!-- Weight -->
+		{#if data.weight}
+			{@const w = data.weight}
+			<MetricCard
+				label="WEIGHT"
+				value={w.kg.toFixed(1)}
+				unit="kg"
+				delta={weightDelta ?? undefined}
+			>
+				{#snippet footer()}
+					{#if data.weightSparkline.length > 1}
+						<Sparkline data={data.weightSparkline} colorVar="--data-1" />
+					{:else}
+						<p class="text-xs text-subtle">{dateRelative(w.recordedAt)}</p>
+					{/if}
+				{/snippet}
+			</MetricCard>
+		{:else}
+			<Card>
+				<p class="text-xs tracking-[0.04em] uppercase text-muted">WEIGHT</p>
+				<p class="mt-2 text-sm text-subtle">No data yet.</p>
+			</Card>
+		{/if}
+
+		<!-- Calories -->
+		<MetricCard label="CALORIES" value={fmt(data.nutrition.kcal)} unit="kcal">
+			{#snippet footer()}
+				<ProgressBar
+					value={data.nutrition.kcal}
+					goal={calGoal}
+					showLabel={false}
+					ceiling
+					label="Calories goal"
+				/>
+				<p class="mt-1 text-xs text-muted tabular-nums">
+					{fmt(Math.max(0, calGoal - data.nutrition.kcal))} left
+				</p>
+			{/snippet}
+		</MetricCard>
+
+		<!-- Steps (2-span on mobile) -->
+		<MetricCard
+			label="STEPS"
+			value={fmt(data.activity?.steps ?? 0)}
+			class="col-span-2 md:col-span-1"
 		>
-			<h2 class="text-md mb-3 font-semibold text-default">Token sanity check</h2>
-			<dl class="grid grid-cols-2 gap-3 text-sm">
-				<dt class="text-muted">Big number (tabular)</dt>
-				<dd class="num text-2xl font-semibold text-default">82.4</dd>
-				<dt class="text-muted">Accent</dt>
-				<dd class="text-accent font-medium">indigo lead</dd>
-				<dt class="text-muted">Positive signal</dt>
-				<dd class="text-positive font-medium">▼ -1.2 kg</dd>
-				<dt class="text-muted">Warning signal</dt>
-				<dd class="text-warning font-medium">approaching cap</dd>
-				<dt class="text-muted">Danger signal</dt>
-				<dd class="text-danger font-medium">exceeded</dd>
-			</dl>
-		</section>
+			{#snippet footer()}
+				<ProgressBar
+					value={data.activity?.steps ?? 0}
+					goal={stepsGoal}
+					showLabel={false}
+					label="Steps goal"
+				/>
+				<p class="mt-1 text-xs text-muted tabular-nums">goal {fmt(stepsGoal)}</p>
+			{/snippet}
+		</MetricCard>
+
+		<!-- Water -->
+		<MetricCard label="WATER" value={fmt(data.waterMl)} unit="ml">
+			{#snippet footer()}
+				<ProgressBar
+					value={data.waterMl}
+					goal={waterGoal}
+					showLabel={false}
+					label="Water goal"
+				/>
+			{/snippet}
+		</MetricCard>
+	</div>
+
+	<!-- Quick-log row -->
+	<section class="mt-6 space-y-2">
+		<p class="text-xs tracking-[0.04em] uppercase text-muted">Quick log</p>
+		<div class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 md:mx-0 md:flex-wrap md:px-0">
+			<form
+				method="POST"
+				action="?/addWater"
+				use:enhance={() => {
+					return async ({ result }) => {
+						if (result.type === 'success') {
+							toast.success('+250 ml water');
+							await invalidateAll();
+						} else {
+							toast.error('Could not log water');
+						}
+					};
+				}}
+			>
+				<input type="hidden" name="amount_ml" value="250" />
+				<Button
+					variant="secondary"
+					size="default"
+					class="shrink-0 whitespace-nowrap"
+					type="submit"
+				>
+					<Droplets class="size-4" aria-hidden="true" />
+					+250 ml
+				</Button>
+			</form>
+			<form
+				method="POST"
+				action="?/addWater"
+				use:enhance={() => {
+					return async ({ result }) => {
+						if (result.type === 'success') {
+							toast.success('+500 ml water');
+							await invalidateAll();
+						} else {
+							toast.error('Could not log water');
+						}
+					};
+				}}
+			>
+				<input type="hidden" name="amount_ml" value="500" />
+				<Button
+					variant="secondary"
+					size="default"
+					class="shrink-0 whitespace-nowrap"
+					type="submit"
+				>
+					<Droplets class="size-4" aria-hidden="true" />
+					+500 ml
+				</Button>
+			</form>
+			<Button
+				variant="secondary"
+				size="default"
+				class="shrink-0 whitespace-nowrap"
+				onclick={() => toast.message('Meal logging comes in Phase 5')}
+			>
+				<Utensils class="size-4" aria-hidden="true" />
+				Log meal
+			</Button>
+		</div>
+	</section>
+
+	<!-- Protein + Sleep + This-week trend -->
+	<div class="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+		<MetricCard label="PROTEIN" value={fmt(data.nutrition.proteinG)} unit="g">
+			{#snippet footer()}
+				<p class="text-xs text-muted tabular-nums">today</p>
+			{/snippet}
+		</MetricCard>
+
+		{#if sleepDuration}
+			<MetricCard label="SLEEP" value={sleepDuration}>
+				{#snippet footer()}
+					<p class="text-xs text-muted tabular-nums">
+						{data.sleep?.startedAt
+							? dateRelative(new Date(data.sleep.startedAt).toISOString().slice(0, 10))
+							: ''}
+					</p>
+				{/snippet}
+			</MetricCard>
+		{:else}
+			<Card>
+				<p class="text-xs tracking-[0.04em] uppercase text-muted">SLEEP</p>
+				<p class="mt-2 text-sm text-subtle">No data yet.</p>
+			</Card>
+		{/if}
+
+		{#if data.weightSparkline.length > 1}
+			<MetricCard
+				hero
+				label="THIS WEEK"
+				value={data.weight ? data.weight.kg.toFixed(1) : '—'}
+				unit="kg"
+				delta={weightDelta ?? undefined}
+				class="col-span-2"
+			>
+				{#snippet footer()}
+					<Sparkline data={data.weightSparkline} colorVar="--data-1" height={48} />
+				{/snippet}
+			</MetricCard>
+		{/if}
 	</div>
 </main>
+
+<!-- Quick-log Sheet (FAB → here). Phase 5 swaps the buttons for the real flows. -->
+<Sheet bind:open={sheetOpen} title="Quick log" description="What do you want to log?">
+	<div class="grid grid-cols-2 gap-3 py-2">
+		<form
+			method="POST"
+			action="?/addWater"
+			use:enhance={() => {
+				return async ({ result }) => {
+					sheetOpen = false;
+					if (result.type === 'success') {
+						toast.success('+250 ml water');
+						await invalidateAll();
+					} else {
+						toast.error('Could not log water');
+					}
+				};
+			}}
+		>
+			<input type="hidden" name="amount_ml" value="250" />
+			<Button variant="secondary" class="w-full" type="submit">+250 ml water</Button>
+		</form>
+		<form
+			method="POST"
+			action="?/addWater"
+			use:enhance={() => {
+				return async ({ result }) => {
+					sheetOpen = false;
+					if (result.type === 'success') {
+						toast.success('+500 ml water');
+						await invalidateAll();
+					} else {
+						toast.error('Could not log water');
+					}
+				};
+			}}
+		>
+			<input type="hidden" name="amount_ml" value="500" />
+			<Button variant="secondary" class="w-full" type="submit">+500 ml water</Button>
+		</form>
+		<Button
+			variant="secondary"
+			class="w-full"
+			onclick={() => {
+				toast.message('Weight form lands in Phase 5');
+				sheetOpen = false;
+			}}
+		>
+			Weight
+		</Button>
+		<Button
+			variant="secondary"
+			class="w-full"
+			onclick={() => {
+				toast.message('Meal form lands in Phase 5');
+				sheetOpen = false;
+			}}
+		>
+			Meal
+		</Button>
+	</div>
+</Sheet>
+
+<FAB label="Quick log" onclick={() => (sheetOpen = true)} />
+<TabBar
+	items={tabs}
+	active={activeTab}
+	onSelect={(t) => {
+		if (t === 'home') return;
+		toast.message(`${t} page comes in a later phase`);
+	}}
+/>
