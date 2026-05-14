@@ -73,7 +73,10 @@
 
 <Toaster />
 
-<main class="min-h-dvh px-4 py-6 pb-28 md:px-8 md:py-10">
+<main
+	class="min-h-dvh px-4 pt-6 md:px-8 md:pt-10"
+	style:padding-bottom="calc(56px + 56px + env(safe-area-inset-bottom) + 32px)"
+>
 	<div class="mx-auto max-w-4xl space-y-10">
 		<header class="space-y-2">
 			<p class="text-xs tracking-[0.04em] uppercase text-muted">Phase 3 · components</p>

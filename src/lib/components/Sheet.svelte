@@ -8,8 +8,6 @@
 		title: string;
 		/** Optional descriptive subtitle. */
 		description?: string;
-		/** Force desktop "centered modal" layout. By default: bottom sheet on mobile, modal on ≥md. */
-		desktopModal?: boolean;
 		children?: Snippet;
 		/** Optional right-side header action snippet (e.g. a "Save" button). */
 		headerAction?: Snippet;
@@ -26,13 +24,22 @@
 		open = $bindable(false),
 		title,
 		description,
-		desktopModal = false,
 		children,
 		headerAction
 	}: SheetProps = $props();
 
 	const CloseIcon = X as unknown as IconComponent;
 </script>
+
+<!--
+  Responsive Sheet — per design-system/MASTER.md §7.10.
+
+  - Mobile (< 1024px): slides up from the bottom, full-width, rounded top
+    corners only, drag handle, max-height 92dvh.
+  - Desktop (≥ 1024px): centered modal, max-width 480px, all corners rounded.
+
+  The breakpoint is `lg:` (1024px) to match the MASTER spec exactly, not `md:`.
+-->
 
 <Dialog.Root bind:open>
 	<Dialog.Portal>
@@ -48,27 +55,26 @@
 				'fixed z-50 flex flex-col bg-(color:--bg-surface-elevated)',
 				'shadow-[var(--elev-3)] outline-hidden',
 				'data-[state=open]:animate-in data-[state=closed]:animate-out',
-				// Mobile-default: bottom sheet.
+				// < lg: bottom sheet.
 				'inset-x-0 bottom-0 max-h-[92dvh] rounded-t-xl border-t border-(color:--border-default)',
 				'pb-[env(safe-area-inset-bottom)]',
 				'data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom',
-				// Desktop: centered modal.
-				desktopModal &&
-					'md:inset-auto md:top-1/2 md:left-1/2 md:max-h-[80dvh] md:w-full md:max-w-[480px]',
-				desktopModal && 'md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-xl md:border',
-				desktopModal &&
-					'md:data-[state=open]:zoom-in-95 md:data-[state=closed]:zoom-out-95',
-				desktopModal &&
-					'md:data-[state=open]:slide-in-from-top-0 md:data-[state=closed]:slide-out-to-top-0'
+				// ≥ lg: centered modal.
+				'lg:inset-auto lg:top-1/2 lg:left-1/2 lg:bottom-auto',
+				'lg:w-full lg:max-w-[480px] lg:max-h-[80dvh]',
+				'lg:-translate-x-1/2 lg:-translate-y-1/2',
+				'lg:rounded-xl lg:border lg:pb-0',
+				'lg:data-[state=open]:zoom-in-95 lg:data-[state=closed]:zoom-out-95',
+				'lg:data-[state=open]:slide-in-from-top-0 lg:data-[state=closed]:slide-out-to-top-0'
 			)}
 		>
-			<!-- Drag handle (mobile only) -->
+			<!-- Drag handle — mobile only. -->
 			<div
-				class="mx-auto mt-2 h-1 w-8 rounded-full bg-(color:--fg-subtle) md:hidden"
+				class="mx-auto mt-2 h-1 w-8 rounded-full bg-(color:--fg-subtle) lg:hidden"
 				aria-hidden="true"
 			></div>
 
-			<header class="flex items-start justify-between gap-4 px-5 pt-3 pb-2">
+			<header class="flex items-start justify-between gap-4 px-5 pt-3 pb-2 lg:pt-5">
 				<div class="min-w-0">
 					<Dialog.Title class="text-md font-semibold text-default">{title}</Dialog.Title>
 					{#if description}
