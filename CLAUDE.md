@@ -62,7 +62,6 @@ A summary of this project lives in the user's Obsidian vault at `/mnt/c/Users/jo
 
 These are not yet locked. When you reach work that requires one, ask the user before picking:
 
-- **Component kit** — shadcn-svelte is the leading candidate but not locked.
 - **Cloudflare hostname** — needs to be picked when we set up the tunnel route. Will probably be `<something>.<your-domain>`.
 
 ## Locked-in choices
@@ -72,6 +71,8 @@ These are not yet locked. When you reach work that requires one, ask the user be
 - **Local Postgres port:** 5433 (not 5432) to avoid colliding with another Postgres container on this machine. See `docker-compose.yml`.
 - **Chart library:** **Apache ECharts** via direct imports from `echarts/core`, `echarts/charts`, etc. No wrapper library. Reasons: small footprint when tree-shaken (we only import what we use), powerful enough for every chart in the roadmap, and proven in the Phase 3 shootout. The `svelte-echarts` npm package is NOT installed — we wire ECharts ourselves inside `onMount`.
 - **Theme-aware chart colors:** `src/lib/charts/css-vars.ts` exposes `cssVar(name, fallback)` and `chartTokens()` for reading design tokens at runtime. JS-driven charts (which can't consume Tailwind utility classes) must use these — never hardcode hex. Theme switch currently requires a re-mount; revisit if it becomes annoying.
+- **Component kit:** `bits-ui` for headless a11y primitives (Dialog → Sheet today, DropdownMenu/Popover/Tooltip later when needed) + `svelte-sonner` for Toast queueing. Every visible MASTER §7 component is bespoke in `src/lib/components/`, themed via Tailwind utilities reading our CSS vars. **Don't reach for a third visual library** — extend the bespoke set instead. Lucide icons via `lucide-svelte`; cast with `Plus as unknown as IconComponent` (see `src/lib/icons.ts`) — workaround for the v1 type strictness, remove if Lucide ships compatible types.
+- **Class helper:** `cn()` in `src/lib/utils.ts` is `clsx + tailwind-merge`. Use it on every component that accepts a `class` prop so callers can override cleanly.
 
 ## Environment
 
