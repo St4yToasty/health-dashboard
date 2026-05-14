@@ -38,6 +38,26 @@ When working in this repo, read these files first (in this order):
 - All time-series queries assume the user's time zone (Europe/Lisbon). Day boundaries use that TZ; raw timestamps in DB are UTC.
 - Deployment manifests live in a **separate repo**: `~/devel/kubernetes-deployments/health-dashboard/deployment.yaml`. Don't put them in this repo.
 
+## Obsidian vault sync
+
+A summary of this project lives in the user's Obsidian vault at `/mnt/c/Users/joamvieira/Documents/notes/Personal/Health Dashboard/`. The vault is the human-readable hub; the repo (and especially `docs/` + `design-system/MASTER.md`) is the canonical source of truth. The two must not drift.
+
+**When to update the vault notes:**
+
+- A phase clears its exit criteria → add an entry to `Progress Log.md` (newest at top) AND flip its row in `Implementation Plan.md`.
+- A decision moves from "Deferred decisions" to "Locked-in choices" in this CLAUDE.md → add a `> [!quote]+` block to `Decisions.md` AND remove the corresponding row from `Implementation Plan.md`'s "Open" decision table.
+- A `docs/<name>.md` gains or loses material content → reflect the change in the matching `Health Dashboard/<Name>.md` vault note (each vault note has a `canonical:` frontmatter link to its repo counterpart — keep it valid).
+- `design-system/MASTER.md` gets a non-trivial change (new token, new component, new rule) → reflect in `Design System.md`.
+- A new component lands in `src/lib/components/` → list it under "Built so far" in `Design System.md`.
+
+**What not to do:**
+
+- Don't copy-paste full docs into the vault. Vault notes are summaries with `[[wikilinks]]` between them and a GitHub URL out to the canonical version. Detail belongs in the repo.
+- Don't edit past entries in `Decisions.md` or `Progress Log.md` — both are append-only. Supersede with a new entry if reality changes.
+- Don't write secrets (tokens, passwords, real internal hostnames, the user's personal email) into the vault notes. The vault syncs across devices via Self-hosted LiveSync — treat it like a public artifact for the purposes of secret hygiene.
+
+**Daily-note logging is separate** and governed by the user's global `~/.claude/CLAUDE.md` (see "Logging work in the daily note") — that's for end-of-day summaries of the work, not for keeping the project hub current.
+
 ## Deferred decisions
 
 These are not yet locked. When you reach work that requires one, ask the user before picking:
