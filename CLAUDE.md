@@ -42,7 +42,6 @@ When working in this repo, read these files first (in this order):
 
 These are not yet locked. When you reach work that requires one, ask the user before picking:
 
-- **Chart library** — to be compared when the viz layer is built. Tokens are library-agnostic CSS vars; whichever lib we pick must consume `var(--data-N)`.
 - **Component kit** — shadcn-svelte is the leading candidate but not locked.
 - **Cloudflare hostname** — needs to be picked when we set up the tunnel route. Will probably be `<something>.<your-domain>`.
 
@@ -51,6 +50,8 @@ These are not yet locked. When you reach work that requires one, ask the user be
 - **ORM:** Drizzle (`drizzle-orm` + `drizzle-kit`) — schema in `src/lib/server/db/schema/`, migrations in `migrations/`. Driver: postgres.js (`postgres` package, not `pg`).
 - **Migrations:** drizzle-kit auto-generates SQL from schema diffs (`pnpm db:generate`). Hand-crafted custom migrations (for things Drizzle can't express in its DSL, like GiST exclusion constraints) live alongside the generated ones — see `migrations/0001_gist_and_views.sql`. Run with `pnpm db:migrate`. Reset + reseed locally with `pnpm db:reset && pnpm db:seed`.
 - **Local Postgres port:** 5433 (not 5432) to avoid colliding with another Postgres container on this machine. See `docker-compose.yml`.
+- **Chart library:** **Apache ECharts** via direct imports from `echarts/core`, `echarts/charts`, etc. No wrapper library. Reasons: small footprint when tree-shaken (we only import what we use), powerful enough for every chart in the roadmap, and proven in the Phase 3 shootout. The `svelte-echarts` npm package is NOT installed — we wire ECharts ourselves inside `onMount`.
+- **Theme-aware chart colors:** `src/lib/charts/css-vars.ts` exposes `cssVar(name, fallback)` and `chartTokens()` for reading design tokens at runtime. JS-driven charts (which can't consume Tailwind utility classes) must use these — never hardcode hex. Theme switch currently requires a re-mount; revisit if it becomes annoying.
 
 ## Environment
 

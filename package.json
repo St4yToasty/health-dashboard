@@ -29,8 +29,6 @@
 		"@sveltejs/kit": "^2.57.0",
 		"@sveltejs/vite-plugin-svelte": "^7.0.0",
 		"@tailwindcss/vite": "^4.2.2",
-		"@types/d3-scale": "^4.0.9",
-		"@types/d3-shape": "^3.1.8",
 		"@types/node": "^24",
 		"@vitest/browser-playwright": "^4.1.3",
 		"dotenv": "^17.4.2",
@@ -54,14 +52,8 @@
 		"vitest-browser-svelte": "^2.1.0"
 	},
 	"dependencies": {
-		"@unovis/svelte": "^1.6.5",
-		"@unovis/ts": "^1.6.5",
-		"d3-scale": "^4.0.2",
-		"d3-shape": "^3.2.0",
 		"drizzle-orm": "^0.45.2",
 		"echarts": "^6.0.0",
-		"layerchart": "^1.0.13",
-		"postgres": "^3.4.9",
-		"svelte-echarts": "^1.0.0"
+		"postgres": "^3.4.9"
 	}
 }
