@@ -22,7 +22,10 @@ import {
 	dailyActivity,
 	dailyNutrition,
 	db,
+	foods,
 	goalsActive,
+	mealItems,
+	meals,
 	sleepSessions,
 	waterIntake
 } from '$lib/server/db';
@@ -161,6 +164,18 @@ const weightSchema = z.object({
 	muscle_mass_kg: z.coerce.number().min(10).max(200).optional().or(z.literal('').transform(() => undefined))
 });
 
+// Meal payload — comes from MealForm as JSON in a single hidden `items` field
+// so we don't have to wrestle with bracketed form-data keys.
+const mealItemSchema = z.object({
+	foodId: z.number().int().positive(),
+	grams: z.number().positive().max(5000)
+});
+const mealSchema = z.object({
+	kind: z.enum(['breakfast', 'lunch', 'dinner', 'snack']),
+	eaten_at: z.string().min(1), // ISO datetime-local string
+	items: z.array(mealItemSchema).min(1).max(20)
+});
+
 // All six measurement fields are optional; at least one must be present.
 const measurementSchema = z
 	.object({
@@ -225,5 +240,65 @@ export const actions: Actions = {
 			source: 'manual'
 		});
 		return { addBodyMeasurement: { ok: true } };
+	},
+
+	addMeal: async ({ request }) => {
+		const form = await request.formData();
+		let payload: unknown;
+		try {
+			payload = JSON.parse(String(form.get('payload') ?? ''));
+		} catch {
+			return fail(400, { addMeal: { error: 'invalid_json' } });
+		}
+		const parsed = mealSchema.safeParse(payload);
+		if (!parsed.success) {
+			return fail(400, { addMeal: { error: parsed.error.message } });
+		}
+		const { kind, eaten_at, items } = parsed.data;
+
+		// Look up each food and snapshot its macros at the chosen grams.
+		const foodIds = items.map((i) => BigInt(i.foodId));
+		const lookups = await db
+			.select({
+				id: foods.id,
+				servingGrams: foods.servingGrams,
+				kcal: foods.kcal,
+				proteinG: foods.proteinG
+			})
+			.from(foods)
+			.where(sql`${foods.id} in (${sql.join(foodIds, sql`, `)})`);
+		const byId = new Map(lookups.map((f) => [Number(f.id), f]));
+
+		// Transaction: one meal row + N meal_items rows.
+		const totalKcal = await db.transaction(async (tx) => {
+			const inserted = await tx
+				.insert(meals)
+				.values({ eatenAt: new Date(eaten_at), kind })
+				.returning({ id: meals.id });
+			const mealId = inserted[0].id;
+			let sumKcal = 0;
+			const itemRows: (typeof mealItems.$inferInsert)[] = [];
+			for (const item of items) {
+				const food = byId.get(item.foodId);
+				if (!food) continue;
+				const ratio = item.grams / Number(food.servingGrams);
+				const kcalAmt = Number((Number(food.kcal) * ratio).toFixed(1));
+				const proteinAmt = Number((Number(food.proteinG) * ratio).toFixed(1));
+				sumKcal += kcalAmt;
+				itemRows.push({
+					mealId,
+					foodId: BigInt(item.foodId),
+					grams: String(item.grams),
+					kcal: String(kcalAmt),
+					proteinG: String(proteinAmt)
+				});
+			}
+			if (itemRows.length > 0) {
+				await tx.insert(mealItems).values(itemRows);
+			}
+			return sumKcal;
+		});
+
+		return { addMeal: { ok: true, kcal: Math.round(totalKcal) } };
 	}
 };

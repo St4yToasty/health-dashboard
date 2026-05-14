@@ -25,6 +25,7 @@
 	import WaterForm from '$lib/components/forms/WaterForm.svelte';
 	import WeightForm from '$lib/components/forms/WeightForm.svelte';
 	import BodyMeasurementForm from '$lib/components/forms/BodyMeasurementForm.svelte';
+	import MealForm from '$lib/components/forms/MealForm.svelte';
 	import type { IconComponent } from '$lib/icons';
 
 	import type { PageData } from './$types';
@@ -385,9 +386,7 @@
 	{:else if logMode === 'measurement'}
 		<BodyMeasurementForm onSubmitted={closeSheet} />
 	{:else if logMode === 'meal'}
-		<div class="rounded-md border border-(color:--border-default) bg-surface-sunken p-4 text-sm text-muted">
-			Meal flow lands in the next commit of Phase 5 — needs the food library route to come with it.
-		</div>
+		<MealForm onSubmitted={closeSheet} />
 	{/if}
 </Sheet>
 
